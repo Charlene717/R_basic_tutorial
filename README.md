@@ -1,379 +1,449 @@
-# R 基本教程（入門到實用）
+# R 基本教程
+作者：Charlene  
+版本：v1.0  
+最後更新：2025-08-14
 
-> 面向初學者與需要快速複習的研究者。本教程以 **R + tidyverse** 為主，示例資料使用內建 `iris`、`mtcars` 與 CSV。可直接作為 Markdown（.md）或 R Markdown（.Rmd）骨架檔。
+> 本教程面向剛開始使用 R 的讀者，涵蓋安裝、語法、資料結構、資料載入與清理、視覺化、基本統計、可重現研究等。所有示例可在純 R 或 RStudio 中直接執行。
 
 ---
 
 ## 目錄
-- [0. 安裝與環境](#0-安裝與環境)
-- [1. 基本語法與求助](#1-基本語法與求助)
-- [2. 物件與資料結構](#2-物件與資料結構)
-- [3. 索引與子集](#3-索引與子集)
-- [4. 流程控制](#4-流程控制)
-- [5. 自訂函式](#5-自訂函式)
-- [6. 導入與輸出 I/O](#6-導入與輸出-io)
-- [7. 資料處理（dplyr）](#7-資料處理dplyr)
-- [8. 欄列轉換（tidyr）](#8-欄列轉換tidyr)
-- [9. 視覺化（ggplot2）](#9-視覺化ggplot2)
-- [10. 字串與日期](#10-字串與日期)
-- [11. 專案與路徑管理](#11-專案與路徑管理)
-- [12. 可重現性：seed、session、renv](#12-可重現性seed-sessions-renv)
-- [13. R Markdown / Quarto 範例](#13-r-markdown--quarto-範例)
-- [14. 除錯與效能](#14-除錯與效能)
-- [15. 常見坑](#15-常見坑)
-- [16. 速查表](#16-速查表)
+- [1. 安裝與環境建議](#1-安裝與環境建議)
+- [2. R 的最基本概念](#2-r-的最基本概念)
+- [3. 基本語法與物件](#3-基本語法與物件)
+- [4. 資料結構](#4-資料結構)
+- [5. 讀寫資料（I/O）](#5-讀寫資料io)
+- [6. 資料處理：base R 與 tidyverse](#6-資料處理base-r-與-tidyverse)
+- [7. 視覺化：base plot 與 ggplot2](#7-視覺化base-plot-與-ggplot2)
+- [8. 控制流程與自訂函數](#8-控制流程與自訂函數)
+- [9. Apply 家族與 purrr](#9-apply-家族與-purrr)
+- [10. 基本統計分析](#10-基本統計分析)
+- [11. 除錯、說明文件與求助](#11-除錯說明文件與求助)
+- [12. 可重現研究與專案結構](#12-可重現研究與專案結構)
+- [13. 常見陷阱與小技巧](#13-常見陷阱與小技巧)
+- [14. 迷你練習題](#14-迷你練習題)
+- [附錄A：常用函數速查表](#附錄a常用函數速查表)
 
 ---
 
-## 0. 安裝與環境
-- 下載 R：[CRAN](https://cran.r-project.org/)；建議搭配 RStudio Desktop。
-- 套件安裝：
-```r
-install.packages(c("tidyverse", "readxl", "writexl", "janitor", "lubridate", 
-                   "stringr", "here", "arrow", "qs", "renv", "rmarkdown", "knitr"))
-```
-- 中文環境注意：讀寫檔時建議指定 `encoding = "UTF-8"` 或確保檔案為 UTF-8。
+## 1. 安裝與環境建議
+- **安裝 R**：建議使用最新穩定版（≥ 4.3）。
+- **RStudio（可選）**：提供更友善的整合開發環境（IDE）。
+- **套件管理**：
+  - 安裝套件：
+    ```r
+    install.packages("tidyverse")   # dplyr、ggplot2、readr、tidyr 等
+    install.packages("readxl")      # 讀取 Excel
+    install.packages("writexl")     # 寫出 Excel
+    install.packages("here")        # 管理專案路徑
+    install.packages("janitor")     # 清理欄位名稱/資料品質檢查
+    ```
+  - 載入套件：
+    ```r
+    library(tidyverse)
+    library(readxl); library(writexl)
+    library(here);    library(janitor)
+    ```
+- **專案化**：建立 R 專案（RStudio: `File > New Project`），用 `here::here()` 管理相對路徑，避免 `setwd()`。
 
 ---
 
-## 1. 基本語法與求助
-```r
-# 指派與列印
-x <- 3 * 7
-x  # 21
-
-# 取得說明
-?mean          # 或 help(mean)
-help.search("linear model")
-apropos("lm") # 模糊搜尋物件
-
-# 工作目錄
-getwd()
-# setwd("/path/to/project")  # 不建議硬編；改用 here::here()，見 §11
-
-# 管線（R 4.1+ 原生 |>）
-mtcars |> head(3) |> summary()
-```
+## 2. R 的最基本概念
+- **R 是一種向量化語言**：許多運算會自動在向量層級進行。
+- **物件導向但輕量**：常見類別（class）包括 `numeric`、`character`、`logical`、`factor`、`list`、`data.frame`。
+- **指派（assignment）**：
+  ```r
+  x <- 1 + 2    # 慣用
+  y = 3 + 4     # 亦可
+  x; y
+  ```
+- **管線（pipe）**：R 4.1+ 提供 base pipe `|>`；tidyverse 也常用 `%>%`。
+  ```r
+  1:5 |> sum()
+  # 等同於
+  sum(1:5)
+  ```
 
 ---
 
-## 2. 物件與資料結構
+## 3. 基本語法與物件
+### 3.1 基本型別
 ```r
-# 向量（atomic vector）
-v <- c(1, 2, 3); typeof(v)   # "double"
-
-# 因子（類別型）
-f <- factor(c("A","B","A"), levels = c("A","B","C"))
-
-# 矩陣與陣列
-m <- matrix(1:6, nrow = 2)
-
-# 清單（list）
-lst <- list(num = 1:3, chr = c("a","b"), flag = TRUE)
-
-# 資料框（data.frame）與 tibble（tidyverse）
-df <- data.frame(x = 1:3, y = c("a","b","c"))
-library(tibble)
-tb <- tibble(x = 1:3, y = c("a","b","c"))
-```
-- **tibble vs data.frame**：tibble 不會自動轉因子、不會部分列印時轉型，互動更友善。
-
----
-
-## 3. 索引與子集
-```r
-x <- c(10, 20, 30, 40)
-x[2]          # 20（位置）
-x[c(1,4)]     # 10, 40（多位置）
-x[-1]         # 移除第一個
-x[x > 15]     # 條件式
-
-# 資料框
-iris[1:3, c("Sepal.Length","Species")]
-iris$Species
-
-# list：[] 保留 list；[[ ]] 抽出元素
-lst <- list(a = 1:3, b = letters[1:2])
-lst["a"]      # list，含 a
-lst[["a"]]    # 向量 1:3
+a <- 1L           # integer
+b <- 3.14         # numeric/double
+c <- "hello"      # character
+d <- TRUE         # logical
+e <- as.factor(c("A","B","A"))  # factor
+typeof(a); class(a)
 ```
 
----
-
-## 4. 流程控制
+### 3.2 運算與比較
 ```r
-# if / else
-x <- 5
-if (x > 3) {
-  "big"
-} else {
-  "small"
-}
+x <- c(1, 2, 3)
+y <- c(10, 20, 30)
+x + y          # 向量加總
+x * 2          # 標量乘法
+x^2            # 逐元素平方
+x > 1          # 比較運算，回傳 logical 向量
+```
 
-# for / while
-s <- 0
-for (i in 1:5) s <- s + i
-s  # 15
+### 3.3 缺失值 NA
+```r
+z <- c(1, NA, 3)
+mean(z)              # NA
+mean(z, na.rm = TRUE)  # 2
+is.na(z)             # 檢查
+```
 
-# 向量化與 *apply
-x <- 1:5
-x2 <- x * 2               # 向量化更快
-lapply(split(iris$Sepal.Length, iris$Species), mean)
+### 3.4 文字處理（基礎）
+```r
+paste("R", "rocks")       # "R rocks"
+paste0("id_", 1:3)        # "id_1" "id_2" "id_3"
+nchar("資料科學")           # 字元數
+toupper("abc"); tolower("AbC")
 ```
 
 ---
 
-## 5. 自訂函式
+## 4. 資料結構
+### 4.1 向量（vector）
 ```r
-# 具名參數 + 預設值 + 明確回傳
-zscore <- function(x, na.rm = TRUE) {
-  if (na.rm) x <- x[!is.na(x)]
-  (x - mean(x)) / sd(x)
-}
+v <- c(3,1,4,1,5)
+v[1]          # 第一個元素
+v[2:4]        # 第2到第4
+v[v > 2]      # 條件式篩選
+sort(v); unique(v); length(v)
+```
 
-zscore(c(1, 2, 3, NA))
+### 4.2 矩陣與陣列（matrix/array）
+```r
+m <- matrix(1:6, nrow = 2, byrow = TRUE)
+m[1, 2]       # 第1列第2行
+dim(m)        # 維度
+```
+
+### 4.3 清單（list）
+```r
+lst <- list(num = 1:3, ch = c("a","b"), flag = TRUE)
+lst$num
+lst[["ch"]]
+```
+
+### 4.4 資料框（data.frame）與 tibble
+```r
+df <- data.frame(id = 1:3, grp = c("A","B","A"), val = c(10, 20, 30))
+df$val
+df[ df$grp == "A", ]
+tibble_df <- tibble::tibble(id = 1:3, grp = c("A","B","A"), val = c(10,20,30))
+tibble_df
+```
+
+### 4.5 因子（factor）
+```r
+f <- factor(c("low","high","medium"), levels = c("low","medium","high"), ordered = TRUE)
+f
 ```
 
 ---
 
-## 6. 導入與輸出 I/O
+## 5. 讀寫資料（I/O）
+### 5.1 CSV / TSV
 ```r
 library(readr)
-# CSV
-cars <- read_csv("data/cars.csv", locale = locale(encoding = "UTF-8"))
-write_csv(cars, "export/cars_out.csv")
+dat <- read_csv("data/input.csv")       # 自動推斷欄位型別
+write_csv(dat, "output/result.csv")
+```
 
-# Excel
+### 5.2 Excel
+```r
 library(readxl); library(writexl)
-xl  <- read_excel("data/demo.xlsx", sheet = 1)
-write_xlsx(xl, "export/demo_out.xlsx")
-
-# R 專用序列化
-saveRDS(iris, "export/iris.rds")
-iris2 <- readRDS("export/iris.rds")
-
-# 高速/跨語言（可選）
-library(arrow); write_feather(mtcars, "export/mtcars.feather")
-
-# 大物件壓縮（可選）
-library(qs); qsave(mtcars, "export/mtcars.qs"); qread("export/mtcars.qs")
+excel_dat <- read_excel("data/input.xlsx", sheet = 1)
+write_xlsx(excel_dat, "output/result.xlsx")
 ```
 
----
-
-## 7. 資料處理（dplyr）
+### 5.3 RDS（R 內建序列化格式）
 ```r
-library(dplyr)
-# 基本動詞：select / filter / arrange / mutate / summarise / group_by
-res <- iris |> 
-  as_tibble() |> 
-  select(Species, Sepal.Length:Petal.Width) |> 
-  filter(Sepal.Length > 5) |> 
-  mutate(SL_cm = Sepal.Length, ratio = Petal.Length / Sepal.Length) |> 
-  group_by(Species) |> 
-  summarise(n = n(), sl_mean = mean(Sepal.Length), .groups = "drop") |> 
-  arrange(desc(sl_mean))
-res
-
-# 連接（join）
-left_join(tibble(Species = unique(iris$Species), code = 1:3), 
-          summarise(group_by(iris |> as_tibble(), Species), n = n()),
-          by = "Species")
+saveRDS(dat, "output/dat.rds")
+dat2 <- readRDS("output/dat.rds")
 ```
 
-### tidy evaluation（基礎）
-當欄名作為參數傳入：
-```r
-mean_by <- function(data, grp, var) {
-  data |> group_by({{ grp }}) |> summarise(m = mean({{ var }}), .groups = "drop")
-}
-mean_by(iris, Species, Sepal.Length)
-```
-
----
-
-## 8. 欄列轉換（tidyr）
-```r
-library(tidyr)
-# 寬轉長
-long <- pivot_longer(iris |> as_tibble(),
-                     cols = Sepal.Length:Petal.Width,
-                     names_to = "feature", values_to = "value")
-# 長轉寬
-wide <- pivot_wider(long, names_from = feature, values_from = value)
-
-# 分割 / 合併
-se <- separate(tibble(id = c("A-1","B-2")), col = id, into = c("grp","idx"), sep = "-")
-unite(se, col = id2, grp, idx, sep = "_")
-```
-
----
-
-## 9. 視覺化（ggplot2）
-```r
-library(ggplot2)
-# 散佈圖 + 擬合線 + 分面
-p <- ggplot(iris, aes(Sepal.Length, Petal.Length, color = Species)) +
-  geom_point(alpha = 0.7) +
-  geom_smooth(method = "lm", se = FALSE) +
-  facet_wrap(~ Species) +
-  theme_minimal()
-print(p)
-
-# 盒鬚圖
-ggplot(iris, aes(Species, Sepal.Length)) +
-  geom_boxplot() +
-  geom_jitter(width = 0.2, alpha = 0.5)
-```
-
----
-
-## 10. 字串與日期
-```r
-library(stringr); library(lubridate)
-# 字串
-str_detect("EGFR_mutant", "mutant")     # TRUE
-str_replace_all("a,b;c", "[;,]", "|")    # "a|b|c"
-
-# 日期時間
-ymd("2025-08-14")
-mdy_hm("08/14/2025 09:00")
-now() |> with_tz("Asia/Taipei")
-```
-
----
-
-## 11. 專案與路徑管理
-- 使用 **RStudio Project** 或 **Quarto Project** 管理工作目錄。
-- 以 `here::here()` 產生穩定相對路徑：
+### 5.4 相對路徑（建議）
 ```r
 library(here)
-# 先在專案根目錄建立 "data/iris.csv"
-readr::write_csv(iris, here("data", "iris.csv"))
-dat <- readr::read_csv(here("data", "iris.csv"))
+read_csv(here("data", "input.csv"))
 ```
+
+> 建議以「專案目錄」為根目錄，資料放在 `data/`、腳本在 `R/`、輸出在 `output/`。
 
 ---
 
-## 12. 可重現性：seed, sessions, renv
+## 6. 資料處理：base R 與 tidyverse
+以下以內建資料集 `mtcars` 與 `iris` 範例。
+
+### 6.1 base R 常見操作
 ```r
-set.seed(1234)       # 固定隨機性
-sessionInfo()        # 紀錄環境
-
-# 專案層級套件凍結（第一次）
-library(renv)
-renv::init()         # 建立專案私有 library
-renv::snapshot()     # 鎖定版本到 renv.lock
-# 另一台機器復原
-renv::restore()
+head(mtcars, 3)
+summary(mtcars)
+mtcars$am <- factor(mtcars$am, labels = c("auto","manual"))
+mtcars[mtcars$mpg > 25, c("mpg","hp","wt")]
 ```
 
----
-
-## 13. R Markdown / Quarto 範例
-**R Markdown .Rmd** 最小骨架：
-```markdown
----
-title: "My Analysis"
-author: "Your Name"
-output: html_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
-```
-
-# Intro
-Some text.
-
-```{r}
-library(tidyverse)
-iris |> group_by(Species) |> summarise(across(everything(), mean))
-```
-```
-
-**Quarto .qmd** 幾乎相同，只需安裝 Quarto 並以 `quarto render` 編譯。
-
----
-
-## 14. 除錯與效能
+### 6.2 dplyr 基本動詞
 ```r
-# 除錯
-f <- function(x) { stop("boom") }
-try(f(1))            # 捕捉錯誤
-traceback()          # 呼叫堆疊
+library(dplyr)
 
-# 逐步
-debugonce(mean); mean(1:3)
-# 或使用 browser() 置入中斷點
-
-# 粗略效能
-system.time({
-  tmp <- lapply(1:1e3, sqrt)
-})
+mtcars |>
+  as_tibble(rownames = "model") |>
+  mutate(am = factor(am, labels = c("auto","manual"))) |>
+  select(model, mpg, hp, wt, am) |>
+  filter(mpg > 20, wt < 3.2) |>
+  arrange(desc(mpg)) |>
+  group_by(am) |>
+  summarise(n = n(),
+            mpg_mean = mean(mpg), 
+            hp_median = median(hp),
+            .groups = "drop")
 ```
 
----
-
-## 15. 常見坑
-- `NA` 比較：使用 `is.na(x)`，不要用 `x == NA`。
-- 因子與字串混用：`stringsAsFactors = FALSE`（base），tibble 預設已是字串。
-- 路徑硬編 `setwd()`：改用專案與 `here()`。
-- 回圈效能差：先考慮向量化或 `map_*()`/`lapply()`。
-- 浮點數比較：用 `all.equal(a, b)` 或 `abs(a-b) < 1e-8`。
-
----
-
-## 16. 速查表
+### 6.3 新增／轉換欄位
 ```r
-# 讀寫
-readr::read_csv(); readr::write_csv()
-readxl::read_excel(); writexl::write_xlsx()
-saveRDS(); readRDS()
-
-# dplyr
-select(); filter(); mutate(); summarise(); group_by(); arrange(); distinct()
-across(); case_when(); relocate(); join 家族：left_join/right_join/inner_join/full_join
-
-# tidyr
-pivot_longer(); pivot_wider(); separate(); unite(); drop_na()
-
-# ggplot2
-ggplot(); geom_point(); geom_line(); geom_boxplot(); geom_histogram();
-facet_wrap(); labs(); theme_minimal()
-
-# 其他
-stringr::str_detect(); lubridate::ymd(); here::here()
+iris |>
+  as_tibble() |>
+  mutate(Petal.Ratio = Petal.Length / Petal.Width,
+         Species = as.character(Species)) |>
+  slice_head(n = 5)
 ```
 
----
-
-### 範例小專案骨架（可直接複製）
+### 6.4 寬長表轉換（tidyr）
 ```r
-# 專案啟動 ---------------------------------------------------------------
-library(here); library(readr); library(dplyr); library(ggplot2)
-readr::write_csv(iris, here("data","iris.csv"))
+library(tidyr)
 
-# 資料讀取 ---------------------------------------------------------------
-dat <- read_csv(here("data","iris.csv"))
+wide <- tibble(id = 1:3, A = c(10,20,30), B = c(5,6,7))
+long <- wide |>
+  pivot_longer(cols = A:B, names_to = "key", values_to = "value")
 
-# 清理與特徵 -------------------------------------------------------------
-dat2 <- dat |> 
-  janitor::clean_names() |> 
-  mutate(petal_ratio = petal_length / petal_width)
-
-# 彙整 ---------------------------------------------------------------
-sum_tbl <- dat2 |> group_by(species) |> summarise(across(starts_with("sepal_"), mean))
-
-# 視覺化 ---------------------------------------------------------------
-plt <- ggplot(dat2, aes(sepal_length, petal_length, color = species)) +
-  geom_point(alpha = 0.7) + theme_minimal()
-print(plt)
-
-# 匯出 ---------------------------------------------------------------
-write_csv(sum_tbl, here("export","summary.csv"))
-ggsave(here("export","scatter.png"), plot = plt, width = 6, height = 4, dpi = 300)
+restored <- long |>
+  pivot_wider(names_from = key, values_from = value)
 ```
+
+### 6.5 合併（join）
+```r
+A <- tibble(id = 1:3, valA = c(10,20,30))
+B <- tibble(id = c(2,3,4), valB = c(200,300,400))
+
+A |> left_join(B, by = "id")
+A |> inner_join(B, by = "id")
+A |> full_join(B,  by = "id")
+```
+
+### 6.6 清理欄位名稱（janitor）
+```r
+library(janitor)
+dirty <- tibble("First Name" = c("Amy","Ben"), "Score(%)" = c(90, 85))
+clean_names(dirty)   # "first_name", "score"
+```
+
 ---
 
-> ✅ 建議：將本檔另存為 `R_basic_tutorial.md` 或改為 `.Rmd`，即可直接 Knit 成報告。若需我幫你客製化（加上你的資料與領域案例），請告訴我章節或需求。
+## 7. 視覺化：base plot 與 ggplot2
+### 7.1 base R 快速繪圖
+```r
+plot(mtcars$wt, mtcars$mpg,
+     main = "MPG vs Weight", xlab = "Weight (1000 lbs)", ylab = "MPG")
+abline(lm(mpg ~ wt, data = mtcars), lwd = 2)
+```
+
+### 7.2 ggplot2 基礎語法
+```r
+library(ggplot2)
+
+ggplot(mtcars, aes(x = wt, y = mpg, color = factor(am))) +
+  geom_point(size = 2) +
+  geom_smooth(method = "lm", se = FALSE) +
+  labs(title = "MPG vs Weight by Transmission",
+       x = "Weight (1000 lbs)",
+       y = "Miles per Gallon",
+       color = "Transmission") +
+  theme_minimal()
+```
+
+### 7.3 分面與儲存圖片
+```r
+p <- ggplot(iris, aes(Sepal.Length, Sepal.Width)) +
+  geom_point(alpha = 0.7) +
+  facet_wrap(~ Species) +
+  labs(title = "Iris by Species")
+p
+
+ggsave("output/iris_facets.png", p, width = 6, height = 4, dpi = 300)
+```
+
+---
+
+## 8. 控制流程與自訂函數
+### 8.1 條件、迴圈
+```r
+x <- 5
+if (x > 3) {
+  msg <- "big"
+} else {
+  msg <- "small"
+}
+
+for (i in 1:3) {
+  print(i^2)
+}
+
+i <- 1
+while (i <= 3) {
+  print(i)
+  i <- i + 1
+}
+```
+
+### 8.2 自訂函數與預設參數
+```r
+add_and_scale <- function(x, y = 0, scale = 1) {
+  stopifnot(is.numeric(x), is.numeric(y), is.numeric(scale))
+  (x + y) * scale
+}
+
+add_and_scale(1:3, y = 2, scale = 0.5)
+```
+
+### 8.3 作用域與回傳
+```r
+f <- function(x) {
+  y <- x + 1      # 函數內部變數
+  return(y * 2)   # 顯式回傳
+}
+f(10)
+```
+
+---
+
+## 9. Apply 家族與 purrr
+### 9.1 base R 的 apply 家族
+```r
+m <- matrix(1:9, nrow = 3)
+apply(m, 1, sum)    # 每一列相加
+apply(m, 2, mean)   # 每一欄平均
+
+l <- list(a = 1:3, b = 4:6)
+lapply(l, mean)     # 回傳 list
+sapply(l, mean)     # 盡量簡化回傳
+```
+
+### 9.2 purrr（tidyverse 函數式工具）
+```r
+library(purrr)
+
+list(1:3, 4:6) |>
+  map_dbl(mean)       # 以 double 回傳
+
+# 對資料框的每欄做運算
+iris |>
+  as_tibble() |>
+  map_if(is.numeric, mean) |>    # 篩選 numeric 欄
+  unlist()
+```
+
+---
+
+## 10. 基本統計分析
+### 10.1 描述統計
+```r
+summary(mtcars$mpg)
+mean(mtcars$mpg); sd(mtcars$mpg); quantile(mtcars$mpg, probs = c(.25, .5, .75))
+```
+
+### 10.2 t 檢定（兩組比較）
+```r
+mt <- mtcars |>
+  mutate(am = factor(am, labels = c("auto","manual")))
+
+t.test(mpg ~ am, data = mt, var.equal = FALSE)  # Welch t-test
+```
+
+### 10.3 線性回歸
+```r
+fit <- lm(mpg ~ wt + hp, data = mtcars)
+summary(fit)
+confint(fit)
+predict(fit, newdata = data.frame(wt = 3, hp = 110), interval = "prediction")
+```
+
+---
+
+## 11. 除錯、說明文件與求助
+- **查看說明**：`?mean`、`help("mean")`、`example(lm)`、`vignette("dplyr")`
+- **錯誤追蹤**：發生錯誤後用 `traceback()`；或在函數前呼叫 `debugonce(fun)`、於程式中插入 `browser()`。
+- **訊息與警告**：`message("info")`、`warning("careful")`、`stop("error")`。
+
+---
+
+## 12. 可重現研究與專案結構
+### 12.1 隨機種子、環境資訊
+```r
+set.seed(123)
+sessionInfo()
+```
+
+### 12.2 推薦的專案目錄
+```
+your-project/
+├─ data/        # 原始或外部資料（唯讀）
+├─ output/      # 產出結果（圖表、表格、模型）
+├─ R/           # R 腳本（函數、分析流程）
+├─ renv/        # （可選）套件快照
+└─ README.md    # 專案說明與重現步驟
+```
+
+### 12.3 套件版本鎖定（可選）
+```r
+install.packages("renv")
+renv::init()         # 建立虛擬環境與快照
+renv::snapshot()     # 記錄套件版本
+renv::restore()      # 於另一台機器重建環境
+```
+
+---
+
+## 13. 常見陷阱與小技巧
+- **字串與因子**：現代 R/tibble 讀入字串不會自動轉為因子；仍請確認型別是否正確。
+- **路徑與編碼**：跨平台建議使用 `here::here()` 與 UTF-8。
+- **`==` 與浮點數**：避免對小數做嚴格相等比較，改用 `all.equal()` 或容忍誤差。
+- **NA 處理**：彙總函數常需 `na.rm = TRUE`。
+- **速度**：向量化、多使用 `apply`/`purrr`，避免不必要的大迴圈；預先配置物件大小。
+
+---
+
+## 14. 迷你練習題
+1. 讀入 `mtcars`，把 `am` 轉成 `auto/manual` 兩水準因子，計算每組 `mpg` 平均與中位數。
+2. 用 `iris` 新增欄位 `Sepal.Ratio = Sepal.Length / Sepal.Width`，並畫出各 `Species` 的箱形圖（箱線圖）。
+3. 建立函數 `zscore(x)` 回傳 `(x - mean(x)) / sd(x)`，用於 `mtcars$wt` 並將結果存成新欄位。
+4. 將下表從寬轉長，再依 `id` 計算 `value` 總和：
+   ```
+   id  A  B  C
+   1  10  5  3
+   2  20  6  4
+   ```
+
+---
+
+## 附錄A：常用函數速查表
+- **基本**：`c()`、`seq()`、`rep()`、`length()`、`sort()`、`unique()`
+- **檢查**：`class()`、`typeof()`、`is.na()`、`anyNA()`、`str()`
+- **索引**：`[ ]`、`[[ ]]`、`$`
+- **彙總**：`mean()`、`median()`、`sd()`、`var()`、`summary()`、`quantile()`
+- **資料框**：`data.frame()`、`as_tibble()`、`subset()`、`merge()`
+- **dplyr**：`select()`、`rename()`、`mutate()`、`filter()`、`arrange()`、`summarise()`、`group_by()`、`across()`、`joins`
+- **tidyr**：`pivot_longer()`、`pivot_wider()`、`separate()`、`unite()`
+- **ggplot2**：`ggplot()`、`geom_point()`、`geom_line()`、`geom_bar()`、`geom_boxplot()`、`facet_wrap()`、`labs()`、`theme_*()`、`ggsave()`
+- **I/O**：`read_csv()`、`write_csv()`、`read_excel()`、`write_xlsx()`、`saveRDS()`、`readRDS()`
+- **統計**：`t.test()`、`lm()`、`aov()`、`cor()`、`prcomp()`
+- **求助**：`?fun`、`help()`、`example()`、`vignette()`、`traceback()`
+
+---
+
+**版權**：本教學可自由使用與修改（CC BY 4.0）。
