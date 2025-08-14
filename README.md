@@ -163,8 +163,8 @@ write_xlsx(excel_dat, "output/result.xlsx")
 
 ### 5.3 RDS（R 內建序列化格式）
 ```r
+dat <- readRDS("output/dat.rds")
 saveRDS(dat, "output/dat.rds")
-dat2 <- readRDS("output/dat.rds")
 ```
 
 ### 5.4 相對路徑（建議）
