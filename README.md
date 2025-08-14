@@ -328,8 +328,9 @@ renv::restore()
 ---
 
 ## 13. R Markdown / Quarto 範例
+
 **R Markdown（.Rmd）最小骨架：**
-```markdown
+````rmd
 ---
 title: "My Analysis"
 author: "Your Name"
@@ -339,6 +340,7 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
 ```
+
 # Intro
 Some text.
 
@@ -346,7 +348,8 @@ Some text.
 library(tidyverse)
 iris |> group_by(Species) |> summarise(across(everything(), mean))
 ```
-```
+````
+
 **Quarto（.qmd）** 類似，安裝 Quarto 後以 `quarto render` 編譯；RStudio 的 **Knit** 按鈕亦可。
 
 ---
