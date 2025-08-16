@@ -1,5 +1,5 @@
 # R Basic Tutorial
-### *若需本指南的英文版本，請參閱 **[中文版本](./Tutorials/README_CN.md)**.*
+### *For the Chinese version of this guide, please see the **[中文版本](./Tutorials/README_CN.md)**.*
 ---
 
 Author: Charlene  
