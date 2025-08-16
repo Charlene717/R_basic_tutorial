@@ -1,5 +1,5 @@
 # R 基本教程
-## *若需本指南的英文版本，請參閱 **[English version](../README.md)**.*
+### *若需本指南的英文版本，請參閱 **[English version](../README.md)**.*
 ---
 
 作者：Charlene  
