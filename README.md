@@ -1,5 +1,7 @@
 # R Basic Tutorial
 *For the Chinese version of this guide, please see the **[中文版本](./Tutorials/README_CN.md)**.*
+---
+
 Author: Charlene  
 Version: v1.0  
 Last Updated: 2025-08-14  
